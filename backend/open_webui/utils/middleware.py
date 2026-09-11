@@ -2936,7 +2936,7 @@ async def process_chat_payload(request, form_data, user, metadata, model):
         # Server side tools
         tool_ids = metadata.get('tool_ids', None)
         # Client side tools
-        direct_tool_servers = metadata.get('tool_servers', None)
+        direct_tool_servers = copy.deepcopy(metadata.get('tool_servers') or [])
 
         log.debug('tool_ids=%r', tool_ids)
         log.debug('direct_tool_servers=%r', direct_tool_servers)
@@ -3050,14 +3050,16 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                 raise HTTPException(status_code=503, detail=f'Terminal unavailable: {e}') from e
 
         if direct_tool_servers:
+            prompts_applied = False
             for tool_server in direct_tool_servers:
                 system_prompt = tool_server.pop('system_prompt', None)
-                if system_prompt:
+                if system_prompt and not metadata.get('direct_tool_server_prompts_applied', False):
                     form_data['messages'] = add_or_update_system_message(
                         system_prompt,
                         form_data['messages'],
                         append=True,
                     )
+                    prompts_applied = True
 
                 tool_specs = tool_server.pop('specs', [])
 
@@ -3067,6 +3069,9 @@ async def process_chat_payload(request, form_data, user, metadata, model):
                         'direct': True,
                         'server': tool_server,
                     }
+
+            if prompts_applied:
+                metadata['direct_tool_server_prompts_applied'] = True
 
         if mcp_clients:
             metadata['mcp_clients'] = mcp_clients

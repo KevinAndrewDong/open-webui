@@ -1218,6 +1218,10 @@ async def chat_completion(
         # Drop tool_servers if caller lacks features.direct_tool_servers —
         # mirrors the storage-side strip in user/settings/update.
         tool_servers = form_data.pop('tool_servers', None)
+        direct_tool_server_prompts_applied = bool(
+            form_data.pop('direct_tool_server_prompts_applied', False)
+            and getattr(request.state, 'internal', False) is True
+        )
         if (
             tool_servers
             and user.role != 'admin'
@@ -1255,6 +1259,7 @@ async def chat_completion(
             'filter_ids': form_data.pop('filter_ids', []),
             'tool_ids': form_data.get('tool_ids', None),
             'tool_servers': tool_servers,
+            'direct_tool_server_prompts_applied': direct_tool_server_prompts_applied,
             'files': form_data.get('files', None),
             'features': form_data.get('features', {}),
             'variables': form_data.get('variables', {}),

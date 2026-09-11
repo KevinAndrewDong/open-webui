@@ -321,6 +321,7 @@ async def delegate(
         'skill_ids': copy.deepcopy(metadata.get('skill_ids') or []),
         'system_prompt': metadata.get('system_prompt'),
         'tool_servers': [] if background else copy.deepcopy(metadata.get('tool_servers') or []),
+        'direct_tool_server_prompts_applied': bool(metadata.get('direct_tool_server_prompts_applied')),
         'filter_ids': copy.deepcopy(metadata.get('filter_ids') or []),
         'terminal_id': metadata.get('terminal_id'),
         'features': features,
@@ -479,6 +480,9 @@ async def delegate(
                 'features': run.get('features') or {},
                 'files': run.get('files') or [],
                 'variables': run.get('variables') or {},
+                'direct_tool_server_prompts_applied': bool(
+                    run.get('direct_tool_server_prompts_applied') and parent_system_prompt and run.get('tool_servers')
+                ),
             }
             if run.get('terminal_id'):
                 form_data['terminal_id'] = run['terminal_id']
